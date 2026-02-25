@@ -7,7 +7,6 @@ class Magazine(Document):
         self.numero_edition = numero_edition
 
     def emprunter(self, adherent):
- 
         if not self.disponibilite:
             raise ValueError("Le magazine est déjà emprunté.")
         self._changer_disponibilite(False)
