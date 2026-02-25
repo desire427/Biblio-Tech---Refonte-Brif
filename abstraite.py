@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 
 
 class Document(ABC):
-    def __init__(self, titre: str):
+    def __init__(self, titre: str, id=None):
+        self.id = id
         self._titre = titre
         self.__disponibilite = True
 
@@ -18,11 +19,11 @@ class Document(ABC):
         self.__disponibilite = etat
 
     @abstractmethod
-    def emprunter(self):
+    def emprunter(self, adherent):
         pass
 
     @abstractmethod
-    def retourner(self):
+    def retourner(self, adherent):
         pass
 
     @abstractmethod
@@ -30,11 +31,9 @@ class Document(ABC):
         pass
 
     @abstractmethod
-    def affichier_un_detail(self):
+    def afficher_un_detail(self):
         pass
 
     @abstractmethod
     def chang_etat_non(self):
         pass
-
-
