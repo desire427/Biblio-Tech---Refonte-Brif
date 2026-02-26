@@ -2,7 +2,8 @@ from bibliothecaire import Bibliothécaire
 from livre import Livre
 from magazine import Magazine
 from adherent import Adherent
-from connection import cursor , conn
+from connection import cursor, conn 
+import bcrypt
 
 
 
@@ -10,8 +11,78 @@ from connection import cursor , conn
 
 
 class Menu:
-    
-    biblio = Bibliothécaire("Biblio-Tech")
+    def __init__(self):
+        self.biblio = Bibliothécaire()
+
+    def authentification(self):
+        while True:
+            nom = "baye"
+            email = "bayebass123@gmail.com"
+            Mot_de_Passe = "admin123"
+            mot_de_passe_bytes = Mot_de_Passe.encode('utf-8')
+            hash_mot_pass = bcrypt.hashpw(mot_de_passe_bytes, bcrypt.gensalt())
+            sql = " INSERT INTO Bibliothecaire (nom,email,Mot_de_Passe) values(%s,%s,%s)"
+            val = (nom, email, hash_mot_pass)
+            cursor.execute(sql, val)
+            conn.commit()
+            email_saisie = input("Entrez votre email SVP  :  ")
+            mot_de_passe_saisie = input("Entrez votre mot de passe  : ")
+            sql = "SELECT email, Mot_de_Passe FROM Bibliothecaire"
+            cursor.execute(sql)
+            resultat = cursor.fetchall()
+            for b in resultat:
+                if b[0] == email_saisie and bcrypt.checkpw(mot_de_passe_saisie.encode('utf-8'), b[1].encode('utf-8')):
+                    print("Connexion réussie")
+                    print(f"\nBienvenue dans le système de gestion ")
+                    self.afficher_menu()
+
+
+            # sql = "SELECT email, Mot_de_Passe FROM Bibliothecaire"
+            # cursor.execute(sql)
+            # resultat = cursor.fetchone()
+            # if not resultat:
+            #     raise ValueError("Email ou mot de passe incorrect. Veuillez réessayer.")
+            # for b in resultat:
+            #     if b == email_saisie:
+            #         resultat1 = True
+            #     break
+            # if resultat1 and bcrypt.checkpw(mot_de_passe_saisie.encode('utf-8'), resultat[1].encode('utf-8')):
+            #     print("Connexion réussie")
+            #     print(f"\nBienvenue dans le système de gestion ")
+            #     self.afficher_menu()
+            #     break
+# =======================================================================
+
+    # def authentifier(self):
+    #     while True:
+    #         mot_de_passe_bass = "admin123"
+    #         mot_de_passe_bytes = mot_de_passe_bass.encode('utf-8')
+    #         hash_mdp = bcrypt.hashpw(mot_de_passe_bytes, bcrypt.gensalt())
+    #         sql = "INSERT INTO Bibliothecaire (nom,email,Mot_De_Passe) values(%s,%s,%s)"
+    #         cursor.execute(sql, ("baye","bayebass123@gmail.com", hash_mdp))
+    #         conn.commit()
+    #         email_saisie=input("Entrez votre email SVP  :  ")
+
+    #         sql = "SELECT email FROM Bibliothecaire"
+    #         cursor.execute(sql)
+    #         resultat = cursor.fetchone()
+    #         for b in resultat:
+    #             if b == email_saisie:
+    #                     resultat1=True
+    #             #break
+
+    #         mot_passe_saisie=input("Entrez votre mot de passe  : ")   
+    #         cursor.execute("SELECT Mot_De_Passe FROM Bibliothecaire")
+    #         hash_stocke = cursor.fetchone() 
+    #         if resultat1 and bcrypt.checkpw(mot_passe_saisie.encode('utf-8'), hash_stocke.encode('utf-8')):
+    #             print("Connexion  réussie")
+    #             print(f"\nBienvenue dans le système de gestion ")
+    #             self.afficher_menu()
+    #             break
+    #         else:
+    #             print("Email ou mot de passe incorrect. Veuillez réessayer.")
+
+
 
     def afficher_menu(self):
         while True:
@@ -35,7 +106,7 @@ class Menu:
                 case "1":
                     titre = input("Titre du livre : ")
                     auteur = input("Auteur du livre : ")
-                    livre = Livre(titre, auteur)
+                    livre = Livre(titre, auteur) 
                     # self.biblio.ajouter_document(livre)
                     sql = " INSERT INTO Livres(titre, auteur) VALUES(%s, %s)"
                     val = (livre.titre, livre.auteur)
@@ -181,4 +252,4 @@ class Menu:
 
 
 menu = Menu()
-menu.afficher_menu()
+menu.authentification()
