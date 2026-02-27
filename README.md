@@ -1,10 +1,10 @@
 # Biblio-Tech - Documentation Technique
 
-Ce document détaille l'architecture technique et le fonctionnement du système de gestion de bibliothèque **Biblio-Tech**. Ce projet a été refondu pour respecter strictement les piliers de la Programmation Orientée Objet (POO) : Abstraction, Encapsulation et Polymorphisme.
+Ce document détaille l'architecture technique et le fonctionnement du système de gestion de bibliothèque **Biblio-Tech**. Ce projet a été conçu en respectant les piliers de la Programmation Orientée Objet (POO) et intègre une persistance des données via une base de données MySQL.
 
 ## Architecture Globale
 
-Le projet est structuré autour d'une classe abstraite parente (`Document`) et de classes enfants concrètes (`Livre`, `Magazine`), gérées par un contrôleur (`Bibliothécaire`) et accessibles via une interface console (`Menu`).
+Le projet est structuré autour de classes modèles (`Livre`, `Magazine`, `Adherent`) héritant pour certaines d'une classe abstraite (`Document`). L'interaction utilisateur est gérée par la classe `Menu` dans `main.py`, qui assure la liaison avec la base de données MySQL pour la persistance des informations.
 
 ## Détail des Classes et Méthodes
 
@@ -46,38 +46,44 @@ Gère la logique spécifique aux magazines.
 *   **`emprunter(self)` / `retourner(self)`** : Logique identique à celle du livre, mais avec des messages adaptés au type "Magazine".
 *   **`afficher_details(self)`** : Affiche les détails formatés : `Titre |==| Numéro d'édition |==| État`.
 
-### 4. `bibliothecaire.py` : Le Gestionnaire
+### 4. `adherent.py` : Gestion des Utilisateurs
 
-Cette classe agit comme le chef d'orchestre. Elle manipule des objets `Document` sans avoir besoin de connaître leur type précis (Polymorphisme).
+Représente les membres de la bibliothèque.
+
+#### Classe `Adherent`
+*   **`__init__(self, nom, prenom, Telephone)`** : Initialise les informations personnelles de l'adhérent.
+*   **`documents_empruntes`** : Liste permettant de suivre les documents actuellement en possession de l'adhérent.
+
+### 5. `connexion.py` : Couche de Persistance
+
+Ce fichier gère la connexion technique à la base de données.
+*   Initialise l'objet `conn` (connexion MySQL) et le `cursor` permettant l'exécution des requêtes SQL dans l'ensemble de l'application.
+
+### 6. `bibliothecaire.py` : Logique Métier
+
+Cette classe peut agir comme gestionnaire en mémoire pour certaines opérations logiques sur le catalogue.
 
 #### Classe `Bibliothécaire`
-*   **`__init__(self, nom)`** : Initialise le nom du bibliothécaire et crée une liste vide `catalogue`.
-*   **`ajouter_document(self, document)`** : Ajoute un objet au catalogue.
-    *   Vérifie d'abord si un document avec le même titre existe déjà pour éviter les doublons.
-*   **`supprimer_document(self, titre)`** : Parcourt le catalogue, trouve le document correspondant au titre et le retire de la liste.
-*   **`recherche_par_titre(self, titre)`** : Recherche un document.
-    *   Effectue une comparaison insensible à la casse et aux espaces (`lower().replace(" ", "")`) pour une meilleure expérience utilisateur.
-    *   Retourne l'objet `Document` trouvé ou affiche un message si non trouvé.
-*   **`lister_documents(self)`** : Affiche l'inventaire complet.
-    *   Boucle sur le catalogue et appelle `doc.afficher_details()`. Grâce au polymorphisme, Python exécute la version de la méthode correspondant au type réel de l'objet (Livre ou Magazine).
+*   **Gestion du catalogue** : Méthodes pour ajouter, supprimer et rechercher des documents dans une liste locale.
+*   **Gestion des adhérents** : Méthodes pour lister et gérer les adhérents en mémoire.
 
-### 5. `main.py` : L'Interface Utilisateur
+### 7. `main.py` : Contrôleur Principal et Interface
 
-Gère l'interaction avec l'utilisateur via la console.
+Point d'entrée de l'application, gérant l'interaction utilisateur et les transactions avec la base de données.
 
 #### Classe `Menu`
+*   **`authentification(self)`** : Système de connexion sécurisé.
+    *   Utilise la bibliothèque **`bcrypt`** pour hacher et vérifier les mots de passe.
+    *   Interroge la table `Bibliothecaire` pour valider les accès.
 *   **`afficher_menu(self)`** : Boucle infinie (`while True`) présentant les options.
     *   **Gestion des choix (`match/case`)** :
-        *   **Cas 1 & 2 (Ajout)** : Instancie un `Livre` ou un `Magazine` et demande au bibliothécaire de l'ajouter.
-        *   **Cas 3 (Emprunt)** :
-            1. Recherche le document par titre.
-            2. Si trouvé, appelle `document.emprunter()`.
-            3. Capture l'exception `ValueError` si le document est déjà emprunté et affiche l'erreur proprement.
-        *   **Cas 4 (Retour)** : Similaire à l'emprunt, appelle `document.retourner()`.
-        *   **Cas 6 (Sécurité)** : Démontre l'interdiction de modification directe.
+        *   **Cas 1 & 2 (Ajout)** : Instancie un `Livre` ou un `Magazine` et l'insère dans la base de données (`INSERT INTO`).
+        *   **Cas 3 (Emprunt)** : Vérifie la disponibilité via SQL, met à jour le statut du document et enregistre l'emprunt.
+        *   **Cas 7, 8, 9 (Adhérents)** : Gestion complète (Ajout, Suppression, Affichage) des adhérents via requêtes SQL.
 
 ## Concepts Clés
 
-1.  **Uniformisation** : Le catalogue contient des objets mixtes (`Livre`, `Magazine`) stockés dans une même liste grâce à leur héritage commun de `Document`.
-2.  **Sécurité des Données** : L'état `__disponibilite` est inaccessible depuis `main.py`. Le menu doit obligatoirement passer par les méthodes `emprunter()` ou `retourner()`, garantissant l'intégrité des données.
-3.  **Évolutivité** : Pour ajouter un nouveau type (ex: DVD), il suffit de créer une classe `DVD(Document)`. Le `Bibliothécaire` n'aura pas besoin d'être modifié pour gérer ce nouveau type.
+1.  **Programmation Orientée Objet** : Utilisation de l'héritage (`Document`), de l'encapsulation et du polymorphisme pour structurer le code.
+2.  **Persistance des Données** : Utilisation de **MySQL** pour stocker durablement les livres, magazines, adhérents et emprunts, remplaçant le stockage volatile en mémoire.
+3.  **Sécurité** : Intégration de **bcrypt** pour la protection des mots de passe et prévention des accès non autorisés.
+4.  **Intégrité des Données** : Le système vérifie la disponibilité des documents en base de données avant d'autoriser un emprunt.
